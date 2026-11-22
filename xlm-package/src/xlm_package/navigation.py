@@ -14,6 +14,14 @@ from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.wait import WebDriverWait
+
+port = 9222
+profile = Path.home() / ".sefaz_automacao_perfil"
+url = 'https://plataforma.sefaz.ma.gov.br/'
+
+selem = '/html/body/app-root/app-main/div/div[2]/div/app-download-form/p-card[1]/div/div/div[2]/form/div[2]/div/p-dropdown/div/span'
+xpath_opt = "//li[contains(@class,'p-dropdown-item')]"
 
 def fdoc():
     '''
@@ -23,7 +31,7 @@ def fdoc():
     if platform.system() == 'Windows':
         try:
             buf = ctypes.create_unicode_buffer(wintypes.MAX_PATH)
-            if ctypes.windll.shell32.SHGetFolderPathH(None, 5,
+            if ctypes.windll.shell32.SHGetFolderPathW(None, 5,
                                                       None, 0,
                                                       buf) == 0:
                 return Path(buf.value)
@@ -36,7 +44,7 @@ def fdoc():
                 if line.startswith('XDG_DOCUMENTS_DIR='):
                     path = line.split('=', 1)[1].strip().strip('"')
                     return Path(path.replace('$HOME', str(Path.home())))
-    return Path.home() / 'Documetos'
+    return Path.home() / 'Documentos'
 
 def _cbrowser():
     '''
@@ -64,12 +72,12 @@ def _fbrowser():
     # Description
     Verifies if the browser candidates are installed 
     '''
-    for type, path in _cbrowser():
+    for kind, path in _cbrowser():
         if path.exists():
-            return type, str(path)
+            return kind, str(path)
     raise RuntimeError('Nenhum navegador compativel... Por favor, instale Edge ou Chrome')
 
-def _openport(port: int = 9222):
+def _openport(port = port):
     '''
     # Description
     Opens a port in the browser for selenium access
@@ -97,9 +105,9 @@ def _tab(drv, url):
         drv.switch_to.window(h)
         if url in drv.current_url:
             return
-    drv.switch_to.window(drv.windwo_handles[-1])
+    drv.switch_to.window(drv.window_handles[-1])
 
-def obrowser(profile, port, url):
+def obrowser(profile = profile, port = port, url = url):
     '''
     # Description
     Opens Edge or Google Chrome using a port to be accessed by selenium
@@ -145,10 +153,13 @@ def obrowser(profile, port, url):
         opt.add_experimental_option('debuggerAddress', f'127.0.0.1:{port}')
         drv = webdriver.Chrome(options = opt)
 
-    _tab(drv)
+    _tab(drv, url)
     return drv
 
-def bclick(wait, id, by: str = 'By.XPATH'):
+browser = obrowser(profile=profile, port=port, url=url)
+wait = WebDriverWait(browser, timeout = 15)
+
+def bclick(id, by: str = By.XPATH, wait = wait):
     '''
     # Description
     Clicks on the desired button
@@ -162,22 +173,9 @@ def bclick(wait, id, by: str = 'By.XPATH'):
         How id should be searched. Use the option of selenium.webdriver.common.by
     '''
     btt = (by, id)
-    wait.until(EC.element_to_be_clickable(btt)).click()
-
-def sel(pselem: str = '/html/body/app-root/app-main/div/div[2]/div/app-download-form/p-card[1]/div/div/div[2]/form/div[2]/div/p-dropdown/div/span',
-          path_opt: str = "//li[contains(@class,'p-dropdown-item')]"):
-    '''
-    # Description
-    Returns the select box element and the firms options
-    # Parameters
-    ## pselem: str
-        xpath to selection box.<br>
-    ## path_opt: str
-        xpath to the dropdown options.
-    '''
-    selem = pselem
-    xpath_opt = path_opt
-    return selem, xpath_opt
+    el = wait.until(EC.element_to_be_clickable(btt))
+    el.click()
+    return el
 
 def _norm(t):
     '''
@@ -189,7 +187,7 @@ def _norm(t):
     '''
     return re.sub(r'\s+', ' ', t).strip()
 
-def _olist(wait):
+def _olist(wait = wait, selem = selem, xpath_opt = xpath_opt):
     '''
     # Description
     Opens the list of firms and wait for option to be apear
@@ -197,13 +195,10 @@ def _olist(wait):
     ## wait: WebDriverWait
             Wait object. It should be defined outside the function.<br>
     '''
-    if (selem is None) | (xpath_opt is None):
-        selem, xpath_opt = sel()
-
-    bclick(id = selem)
+    bclick(wait = wait, id = selem)
     wait.until(EC.presence_of_all_elements_located((By.XPATH, xpath_opt)))
 
-def listlist(browser):
+def listlist(browser = browser, wait = wait, xpath_opt = xpath_opt):
     '''
     # Description
     List firms in the selection box
@@ -211,17 +206,13 @@ def listlist(browser):
     ## browser: WebDriver 
             The driver used for the automation. <br>
     '''
-    _olist()
-
-    if (selem is None) | (xpath_opt is None):
-            selem, xpath_opt = sel()
-
+    _olist(wait)
     itens = browser.find_elements(By.XPATH, xpath_opt)
     names = [_norm(i.get_attribute('aria-label') or i.text) for i in itens]
     browser.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
     return [n for n in names if n]
 
-def select(browser, name):
+def select(name, wait = wait, browser = browser, xpath_opt = xpath_opt):
     '''
     # Description
     Select a firm on the selection box
@@ -231,16 +222,18 @@ def select(browser, name):
     ## name: str
         Name of the firm to be selected
     '''
-    _olist()
-
-    if (selem is None) | (xpath_opt is None):
-            selem, xpath_opt = sel()
-    
+    _olist(wait)
     itens = browser.find_elements(By.XPATH, xpath_opt)
     for item in itens:
         if _norm(item.get_attribute('aria-label') or item.text) == name:
-            browser.execute_script("arguments[0].scrollIntoView({block: 'center'});",
-                                  item)
+            browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", item)
             item.click()
             return
     raise ValueError(f'Empresa não encontrada: {name}')
+
+folder = fdoc() / 'Sefaz MA'
+cache_path = folder / 'cache' / 'datas consultadas'
+cache_path.parent.mkdir(parents = True, exist_ok = True)
+
+interval = 60 * 60
+

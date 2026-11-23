@@ -3,7 +3,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "xlm_package"
+name = "xml_package"
 version = "0.1.0"
 description = "Functions used on my automation script"
 readme = "README.md"

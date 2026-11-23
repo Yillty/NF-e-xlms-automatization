@@ -23,6 +23,13 @@ url = 'https://plataforma.sefaz.ma.gov.br/'
 selem = '/html/body/app-root/app-main/div/div[2]/div/app-download-form/p-card[1]/div/div/div[2]/form/div[2]/div/p-dropdown/div/span'
 xpath_opt = "//li[contains(@class,'p-dropdown-item')]"
 
+def popup(msg, title: str = 'Rotina XML', icon = 0x40):
+    if platform.system() == 'Windows':
+        ctypes.windll.user32.MessageBoxW(0, str(msg), title, icon | 0x1000)
+    else:
+        subprocess.run(['notify-send', title, str(msg)])
+
+
 def fdoc():
     '''
     # Description
@@ -226,8 +233,7 @@ def select(name, wait = wait, browser = browser, xpath_opt = xpath_opt):
     itens = browser.find_elements(By.XPATH, xpath_opt)
     for item in itens:
         if _norm(item.get_attribute('aria-label') or item.text) == name:
-            browser.execute_script("arguments[0].scrollIntoView({block: 'center'});",
-                                  item)
+            browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", item)
             item.click()
             return
     raise ValueError(f'Empresa não encontrada: {name}')
@@ -237,4 +243,34 @@ cache_path = folder / 'cache' / 'datas consultadas'
 cache_path.parent.mkdir(parents = True, exist_ok = True)
 
 interval = 60 * 60
+
+def baixar(name, m, y):
+
+    select(name)
+    
+    data = bclick(id = '//*[@id="competencia"]')
+    atual = data.get_attribute('value')
+    esperado = f'{m}/{y}'
+
+    if atual != esperado:
+        data.send_keys(Keys.CONTROL, 'a')
+        data.send_keys(Keys.DELETE)
+        data.send_keys(m, y)
+
+    tipos = ('NFE', 'NFCE')
+    consulta = (1, 2)
+
+    for tipo in tipos:
+        for c in consulta:
+            print(f'Iniciando o download das {tipo}...')
+
+            bclick(id = '/html/body/app-root/app-main/div/div[2]/div/app-download-form/p-card[1]/div/div/div[2]/form/div[3]/div[3]/div/div[2]/p-dropdown/div/span')
+            
+            bclick(id = f"//li[contains(@class,'p-dropdown-item')][@aria-label='{tipo}']")
+
+            bclick(id = '/html/body/app-root/app-main/div/div[2]/div/app-download-form/p-card[1]/div/div/div[2]/form/div[3]/div[4]/div/div[2]/p-dropdown')
+
+            bclick(id = f'//*[@id="pr_id_4_list"]/p-dropdownitem[{c}]/li/span')
+
+            bclick(id = '/html/body/app-root/app-main/div/div[2]/div/app-download-form/p-card[1]/div/div/div[2]/form/div[3]/div[7]/div/div[2]/div/button')
 

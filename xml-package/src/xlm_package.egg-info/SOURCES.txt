@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+src/xml_package/__init__.py
+src/xml_package/cache.py
+src/xml_package/navigation.py
+src/xml_package.egg-info/PKG-INFO
+src/xml_package.egg-info/SOURCES.txt
+src/xml_package.egg-info/dependency_links.txt
+src/xml_package.egg-info/requires.txt
+src/xml_package.egg-info/top_level.txt

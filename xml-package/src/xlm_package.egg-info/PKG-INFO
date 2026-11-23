@@ -1,8 +1,0 @@
-Metadata-Version: 2.4
-Name: xml_package
-Version: 0.1.0
-Summary: Functions used on my automation script
-Author: Yillty
-Requires-Python: >=3.9
-Description-Content-Type: text/markdown
-Requires-Dist: selenium

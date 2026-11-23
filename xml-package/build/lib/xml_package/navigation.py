@@ -27,7 +27,8 @@ def popup(msg, title: str = 'Rotina XML', icon = 0x40):
     if platform.system() == 'Windows':
         ctypes.windll.user32.MessageBoxW(0, str(msg), title, icon | 0x1000)
     else:
-        subprocess.run(['notify-send', title, str(msg)])
+        subprocess.run(['zenity', '--info', '--title', title, '--text', str(msg)],
+                       check = True)
 
 
 def fdoc():
@@ -146,10 +147,9 @@ def obrowser(profile = profile, port = port, url = url):
         else:
             raise RuntimeError('O navegador não abriu a porta a tempo')
 
-    input(
-        '\nO navegador foi aberto. Faça o login e acesse a plataforma.\n'
-        'Após realizado o login, retorne à esta página e aperte ENTER para continuar'
-    )
+    popup(msg =
+        'O navegador foi aberto. Faça o login e acesse a plataforma.\n\n'
+        'Após realizado o login, retorne à esta página e aperte OK para continuar', title = 'Login')
 
     if type == 'edge':
         opt = EdgeOptions()

@@ -245,6 +245,17 @@ cache_path.parent.mkdir(parents = True, exist_ok = True)
 interval = 60 * 60
 
 def baixar(name, m, y):
+    '''
+    # Description
+    Employs the download routine for the selected firm
+    # Parameters
+    ## name: str
+    Name of the firm
+    ## m: int
+    Reference month to be downloaded
+    ## y: int
+    Reference year to be downloaded
+    '''
 
     select(name)
     
